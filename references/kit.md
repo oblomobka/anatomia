@@ -417,3 +417,22 @@ import * as TA from "../../kit/turn-audit.mjs";
 | `orbitOrExit(T, R, P, { flag = "--audit", argv, sweep, clips, poses, crowd, cover, fittings, quick, only, log })` | Runs `orbit` when the flag is present, prints the report, sets exit code 1 on any failure. Ends `turn audit passed` only for a full run; with `only` it ends `turn audit partial`, with `quick` `turn audit quick` (`3d.md`, section 13). |
 | `orbit(T, R, P, options)`, `orbitReport(result)`, `orbitFailures(result)` | The checks, the text, the count. `result.skipped` lists the lines `only` left out (printed `skipped`); `result.quick` is set for a quick run. |
 | `posed(shape, pose)`, `eventsOf(T, layer)` | A recorded shape moved by a group pose; a layer's edge-on angles. |
+
+## 16. Capa fab: diagramas de máquinas (`kit/fab.mjs`)
+Para láminas de capacitación estáticas, con flechas, etiquetas y textos en español. Se suma a `iso-kit`, no lo sustituye. Los puntos pueden ser del mundo `[x, y, z]` o de pantalla `[sx, sy]`.
+
+| Función | Qué dibuja |
+|---|---|
+| `arrowSvg(P, desde, hasta, { both = true })` | Flecha de movimiento (color `--fab-move`). `both: false` para una sola punta. |
+| `axisTagSvg(P, punto, "X", [dx, dy])` | Círculo con la letra del eje, desplazado en px de pantalla. |
+| `labelSvg(P, punto, [tx, ty], "Texto", { anchor, sub })` | Punto en la pieza, línea guía y texto en `[tx, ty]` de pantalla. `anchor: "end"` para etiquetas a la izquierda. |
+| `beamSvg(P, desde, hasta)` | Rayo o haz discontinuo con punto de impacto (`--fab-beam`). |
+| `fabSvg({ width, height, label, body, theme = "light" })` | SVG autónomo con estilos, tema y fondo, para diapositivas. |
+| `fabPageHtml({ title, fig, hint, keys, caption, svg })` | Página HTML con la lámina; es la fuente del PNG y el PDF. |
+| `materialSvg(solidHtml)` | Pinta un sólido del kit con el color de material. Regla: la máquina neutra, el material en color. |
+| `cutSvg(P, hecho, pendiente)` | Transformación sobre el material: tramo hecho continuo y tramo pendiente discontinuo. |
+| `sparkSvg(P, punto)` | Punto donde la herramienta actúa (impacto del láser, punta de la fresa). |
+| `mirrorSvg(P, centro, dirección)` | Espejo visto como un trazo corto, para el recorrido de un haz. |
+| `FAB_CSS`, `FAB_KEYS` | Estilos y paleta (todo en variables `--fab-*`) y entradas de leyenda estándar. |
+
+Exportar: `node scripts/export.mjs <pagina.html>` escribe `.png` (figura y leyenda) y `.pdf` (A4) con el Chromium de Playwright. Ejemplo completo: `examples/cortadora-laser/build.mjs`.
