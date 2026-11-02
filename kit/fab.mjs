@@ -8,8 +8,10 @@ const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 
 // Paleta y estilos de la capa fab. Todo pasa por variables para poder cambiar la estética en un sitio.
 export const FAB_CSS = `
-.iso{--fab-move:#2f5bd8;--fab-beam:#e5484d;--fab-ink:#e6e6e6;--fab-sub:#8c8c90;--fab-leader:#6a6a6a;--fab-tag-text:#ffffff;--fab-font:ui-sans-serif,system-ui,"Segoe UI",sans-serif}
-.iso[data-theme="light"]{--fab-ink:#26262a;--fab-sub:#7a7a80;--fab-leader:#9a9aa0;--anatomy-weight:.9px}
+.iso{--fab-move:#e6e6e6;--fab-beam:#ff5a5f;--fab-ink:#e6e6e6;--fab-sub:#8c8c90;--fab-leader:#6a6a6a;--fab-tag-text:#111111;--fab-font:ui-sans-serif,system-ui,"Segoe UI",sans-serif;
+  --fab-material:#2f6fe0;--fab-material-top:#1d3a6e;--fab-material-side:#16305c;--fab-material-edge:#7aa5ff}
+.iso[data-theme="light"]{--fab-move:#2b2b30;--fab-beam:#e5484d;--fab-ink:#26262a;--fab-sub:#7a7a80;--fab-leader:#9a9aa0;--fab-tag-text:#ffffff;--anatomy-weight:.9px;
+  --fab-material:#2563eb;--fab-material-top:#dbe7fd;--fab-material-side:#b8cdf6;--fab-material-edge:#2563eb}
 .fab-move-line{fill:none;stroke:var(--fab-move);stroke-width:2.2;stroke-linecap:round}
 .fab-move-head{fill:var(--fab-move);stroke:none}
 .fab-axis circle{fill:var(--fab-move)}
@@ -20,7 +22,16 @@ export const FAB_CSS = `
 .fab-label circle{fill:var(--fab-ink)}
 .fab-label text{fill:var(--fab-ink);font:600 14px var(--fab-font)}
 .fab-label text.fab-sub{fill:var(--fab-sub);font-weight:400;font-size:12px}
-.iso-plate{--anatomy-blue:var(--fab-move);--anatomy-red:var(--fab-beam)}
+.fab-material>.iso-top,.fab-material>.iso-fill{fill:var(--fab-material-top)}
+.fab-material>.iso-shade{fill:var(--fab-material-side)}
+.fab-material>.iso-edge,.fab-material>.iso-crease,.fab-material>.iso-bevel{stroke:var(--fab-material-edge)}
+.fab-cut-done{fill:none;stroke:var(--fab-material);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.fab-cut-todo{fill:none;stroke:var(--fab-material);stroke-width:1.1;stroke-dasharray:3 3;opacity:.7}
+.fab-spark circle{fill:var(--fab-beam)}
+.fab-spark circle.fab-glow{fill:var(--fab-beam);opacity:.18}
+.fab-spark path{stroke:var(--fab-beam);stroke-width:1.2;stroke-linecap:round}
+.fab-mirror{stroke:var(--fab-ink);stroke-width:2.6;stroke-linecap:round}
+.iso-figure{--anatomy-blue:var(--fab-move);--anatomy-red:var(--fab-beam);--anatomy-green:var(--fab-material)}
 `;
 
 const screen = (p, P) => (p.length === 3 ? iso(p, P) : p);
@@ -59,6 +70,32 @@ export function beamSvg(P, from, to, { dot = 2.6 } = {}) {
   return `<g class="fab-beam"><path d="M${f(a[0])} ${f(a[1])}L${f(b[0])} ${f(b[1])}"/>${dot ? `<circle cx="${f(b[0])}" cy="${f(b[1])}" r="${dot}"/>` : ""}</g>`;
 }
 
+/** Pieza de material (lo que se transforma): pinta un sólido del kit con el color de material en vez de neutro. */
+export const materialSvg = (solidHtml) => solidHtml.replace('class="iso-solid', 'class="iso-solid fab-material');
+
+/** Transformación sobre el material: tramo ya hecho (continuo) y tramo pendiente (discontinuo), en puntos del mundo. */
+export function cutSvg(P, done = [], todo = []) {
+  const d = (pts) => pts.length > 1 ? "M" + pts.map((p) => screen(p, P).map(f).join(" ")).join("L") : "";
+  return `<g class="fab-cut">${todo.length > 1 ? `<path class="fab-cut-todo" d="${d(todo)}"/>` : ""}${done.length > 1 ? `<path class="fab-cut-done" d="${d(done)}"/>` : ""}</g>`;
+}
+
+/** Punto donde la herramienta actúa sobre el material: núcleo, halo y chispas. */
+export function sparkSvg(P, at, { r = 2.4, rays = 6, len = 6 } = {}) {
+  const [x, y] = screen(at, P);
+  const lines = Array.from({ length: rays }, (_, i) => {
+    const a = (i / rays) * Math.PI * 2 + 0.3, c = Math.cos(a), s = Math.sin(a) * 0.6;
+    return `M${f(x + c * (r + 2))} ${f(y + s * (r + 2))}L${f(x + c * (r + 2 + len))} ${f(y + s * (r + 2 + len))}`;
+  }).join("");
+  return `<g class="fab-spark"><circle class="fab-glow" cx="${f(x)}" cy="${f(y)}" r="${f(r * 3.2)}"/><path d="${lines}"/><circle cx="${f(x)}" cy="${f(y)}" r="${r}"/></g>`;
+}
+
+/** Espejo de 45° visto como un trazo corto sobre el plano horizontal: centro [x,y,z] y dirección de la cara en planta. */
+export function mirrorSvg(P, [x, y, z], [dx, dy], half = 7) {
+  const l = Math.hypot(dx, dy) || 1, ux = (dx / l) * half, uy = (dy / l) * half;
+  const a = iso([x - ux, y - uy, z], P), b = iso([x + ux, y + uy, z], P);
+  return `<path class="fab-mirror" d="M${f(a[0])} ${f(a[1])}L${f(b[0])} ${f(b[1])}"/>`;
+}
+
 /** SVG listo para usar fuera de la página (diapositivas, Inkscape): lleva sus estilos, tema y fondo. */
 export function fabSvg({ width, height, label, body, theme = "light", background = true }) {
   const bg = background ? `<rect width="${width}" height="${height}" style="fill:var(--anatomy-card)"/>` : "";
@@ -77,4 +114,5 @@ export function fabPageHtml({ title, fig = "Fig. 1", hint = "", keys = [], capti
 export const FAB_KEYS = {
   move: { mark: "blue", label: "Hacia dónde se mueve cada parte" },
   beam: { mark: "red", label: "Rayo o haz" },
+  material: { mark: "green", label: "Material que se transforma" },
 };

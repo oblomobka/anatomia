@@ -429,6 +429,10 @@ Para láminas de capacitación estáticas, con flechas, etiquetas y textos en es
 | `beamSvg(P, desde, hasta)` | Rayo o haz discontinuo con punto de impacto (`--fab-beam`). |
 | `fabSvg({ width, height, label, body, theme = "light" })` | SVG autónomo con estilos, tema y fondo, para diapositivas. |
 | `fabPageHtml({ title, fig, hint, keys, caption, svg })` | Página HTML con la lámina; es la fuente del PNG y el PDF. |
+| `materialSvg(solidHtml)` | Pinta un sólido del kit con el color de material. Regla: la máquina neutra, el material en color. |
+| `cutSvg(P, hecho, pendiente)` | Transformación sobre el material: tramo hecho continuo y tramo pendiente discontinuo. |
+| `sparkSvg(P, punto)` | Punto donde la herramienta actúa (impacto del láser, punta de la fresa). |
+| `mirrorSvg(P, centro, dirección)` | Espejo visto como un trazo corto, para el recorrido de un haz. |
 | `FAB_CSS`, `FAB_KEYS` | Estilos y paleta (todo en variables `--fab-*`) y entradas de leyenda estándar. |
 
 Exportar: `node scripts/export.mjs <pagina.html>` escribe `.png` (figura y leyenda) y `.pdf` (A4) con el Chromium de Playwright. Ejemplo completo: `examples/cortadora-laser/build.mjs`.
